@@ -474,7 +474,7 @@ But why should we care?  In the next stage of the pipeline, we will be performin
 
 One of the major difference between Project 1 and 4, is the requirement to apply a perspective transform to rectify the binary road image to a ("birds-eye view").  The reason to do this is to more easily identify the lane lines and to make curvature measurements.  We will use the **Pinhole Camera** mathematical model to transform the perspective view of the image plane into a planar 'birds-eye' view (view looking down from above).  See [here](https://en.wikipedia.org/wiki/Pinhole_camera_model) for the mathematics involved in doing projections in a **Pinhole Camera** model.
 
-![Geometry of a pinhole camera](https://en.wikipedia.org/wiki/Pinhole_camera_model#/media/File:Pinhole.svg)
+![Geometry of a pinhole camera](./images/pinhole_camera_model.png)
 
 But in general, we are using the theoretical geometry of the pinhole camera model to project the (Y1, Y2) perspective image plane to a (x1, x2, x3) 3D space.  Then we will use just the (x2, x3) coordinates for the 'birds-eye' view mapping:
 
