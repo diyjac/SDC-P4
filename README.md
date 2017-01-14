@@ -1297,7 +1297,11 @@ Explore ways to control the Field of View from the transform perspective by dyna
 1. Control and isolate the areas where lane lines can be found, even on roads with high curvature
 2. Control **vanishing point** anomalies when dealing with planar 'birds-eye' views.
 
-### 7.4 In Conclusion
+### 7.4 Localization
+
+Explore ways to map the generated 'birds-eye' view into a larger image map.  This will generate a *localized* reference points where we can use as a guide for finding lane lines even when lighting and weather conditions are bad.
+
+### 7.5 In Conclusion
 
 This has been a wonderful project, and we wish we could continue further; however, the end of the term is rapidly approaching and we need to get to Project 5!
 
