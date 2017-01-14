@@ -327,9 +327,11 @@ What is at issue is that we were applying the same thresholds on different image
 ![Image Analysis](./output_images/imageanalysisresults.png)
 
 But now that we have the statistics, how about just correcting the image ourselves?  That is what we will try next!
+
 ##### 3.2.3.6 Exposure Correction/Normalization (Experimental)
 
 Now that we have some statistics on the images, our reasoning is could we not just use some digital image techniques to rebalance the image?  We attempted to do this in **ImageFilters** module using its *balanceEx* function as shown below:
+
 *NOTE: We could have tried the Gamma correction function in OpenCV, but wanted to experiment with different thresholding and masking techniques.*
 
 ```
@@ -377,6 +379,7 @@ Now that we have some statistics on the images, our reasoning is could we not ju
 ```
 
 The resulting image is shown below.
+
 *NOTE: Notice that the images are only corrected at the bottom half?  This is because we wanted to save on processing time and storage space.  Since we needed to find lane line boundaries, we just needed to correct the part of the image that contains them: the lower half!*
 
 ![Image Quality Enhancements](./output_images/imageenhancementresults.png)
@@ -1249,7 +1252,7 @@ The best we could do was this 5-second segment at the beginning of the harder_ch
 
 <img src="./images/harder_challenge_video_out.gif" width=640 height=480>
 
-But we believe given enough time, this could be solved, but its time to go on to the next project.
+We believe given enough time, this could be solved, but its time to go on to the next project.
 
 *Please Note: This video was taken about two weeks back when we were still experimenting with the harder_challenge_video.  After updating everything to make the CLI version better for deployment, we discovered that the enhancements made no longer worked in this version of the CLI.  We will investigate why this is the case in a later phase of development.*
 
@@ -1279,7 +1282,7 @@ Many things can be done in this area too, especially for the harder challenge vi
 Explore ways to control the Field of View from the transform perspective by dynamically calculating the optimal source points for finding the lane lines to:
 
 1. Control and isolate the areas where lane lines can be found, even on roads with high curvature
-2. Control horizontal and **vanishing point** anomalies when dealing with planar 'birds-eye' views.
+2. Control **vanishing point** anomalies when dealing with planar 'birds-eye' views.
 
 ### 7.4 In Conclusion
 
