@@ -1215,6 +1215,7 @@ The harder challenge video shows the forward facing view of a winding two-lane c
 ### 6.1 Video Diagnostics
 
 There are numerous issues at play here.  Chief amount those are:
+
 1. Areas of low lighting
 2. Areas of brightness
 3. Areas of obscured lane lines
