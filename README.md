@@ -476,7 +476,7 @@ One of the major difference between Project 1 and 4, is the requirement to apply
 
 ![Geometry of a pinhole camera](./images/pinhole_camera_model.png)
 
-But in general, we are using the theoretical geometry of the pinhole camera model to project the (Y1, Y2) perspective image plane to a (x1, x2, x3) 3D space.  Then we will use just the (x2, x3) coordinates for the 'birds-eye' view mapping:
+But in general, we are using the theoretical geometry of the pinhole camera model to project the (Y1, Y2) perspective image plane to a (x1, x2, x3) 3D space.  Then we will use just the (x1, x3) coordinates for the 'birds-eye' view mapping:
 
 ![Geometry calculations for 'birds-eye' view](https://wikimedia.org/api/rest_v1/media/math/render/svg/5f4b617d13f9fb4e5811f42de5437a2494f307c2)
 
