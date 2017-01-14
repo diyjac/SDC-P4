@@ -11,6 +11,7 @@ Udacity Self-Driving Car Project 4: Advance Lane Finding
 Fundamentally, this Python based command line interface (CLI) software is structured internally as a software pipeline, a series of software components, connected together in a sequence or multiple sequences (stages), where the output of one component is the input of the next one.  Our pipeline implementation is made up of 7 major components, and we will go into them in detail in section 1.2.  The majority of its software is based on the Open Source Computer Vision Library (OpenCV).  OpenCV is an open source computer vision and machine learning software library. OpenCV was built to provide a common infrastructure for computer vision applications and to accelerate the use of machine perception in the commercial products.  More about OpenCV can be found at http://opencv.org/.
 #### 1.1 Design Goals
 The software must meet the following design goals to be successful:
+
 1. Apply a distortion correction to the raw image
 2. Use color transforms, gradients, etc., to create a threshold binary image
 3. Apply a perspective transform to rectify binary image ("birds-eye view")
@@ -20,12 +21,15 @@ The software must meet the following design goals to be successful:
 7. Output visual display of the lane boundaries and numerical estimation of the lane curvature and vehicle position.
 
 In addition, we would also like to implement a software pipeline that will:
+
 1. Extend the rectified lane lines as far to the horizon as possible
 2. Keep the correct aspect ratio when projecting the perspective view down to a planar ('birds-eye') view
 3. Optimize on speed of execution:  When not in diagnostics mode, try to spend less time processing each frame.  Where possible, pass the last frames information instead of recomputing it.  Memory is less expensive than CPU time for real-time applications.
 
 #### 1.2 Components and Modulization
+
 To achieve the design goals, we will create a pipeline made of 7 components.  Each of these are described here briefly.
+
 1. **CameraCal:** Python class that handles camera calibrations operations
 2. **ImageFilters:** Python class that handles image analysis and filtering operations
 3. **ProjectionManager:** Python class that handles projection calculations and operations
@@ -54,11 +58,16 @@ optional arguments:
   --diag DIAG  display diagnostics: [0=off], 1=filter, 2=proj 3=full
   --notext     do not render text overlay
 ```
+
 *NOTE: P4pipeline.py is implemented with fail-safe, so if your specified output file is detected to exists, the pipeline will refuse to run and overwrite it.  If this situation occurs, either specify another output filename, or delete the original output file before trying again.*
+
 ## 3 Implementation Details
-The following sections describes the implementation of the pipeline in detail and why this particular implementation was chosen.  Some factors of the architecture decision was based on efficiency, or observed improvements with video processing that were not observed when processing single images.  Where such observations were made, the subsequent improvements mostly improved both single image and video processing.  Cases where the improvements made single image processing suffer, we decide to make the change anyway, since we are bias toward making the lane boundaries identification video processing better.
+The following sections describe the implementation of the pipeline in detail and why this particular implementation was chosen.  Some factors of the architecture decision was based on efficiency, or observed improvements with video processing that were not observed when processing single images.  Where such observations were made, the subsequent improvements mostly improved both single image and video processing.  Cases where the improvements made single image processing suffer, we decide to make the change anyway, since we are bias toward making the lane boundaries identification video processing better.
+
 ### 3.1 Camera Calibration
+
 One of the goals of the image processing is distortion correction.  Image distortion occurs when a camera looks at 3D objects in the real world through lens and transforms them into a 2D image when this transformation is not perfect.  The distortions in an image can:
+
 1. Change the appearent size of an object
 2. Change the apparent shape of an object
 3. Cause an object's appearance to change depending on where it is in the field of view
@@ -95,12 +104,15 @@ The first thing the P4pipeline does when it starts its pipeline modules is to us
 
 #### 3.2.3 Image Filters
 Next the **ImageFilters** module will apply filters to the images in an attempt to isolate the pixels that makes the lane lines.  In each of the subsections, we will describe a filter deployed by the **ImageFilters** module either in sequence or in combination.  You may view the **ImageFilters** module [here](./p4lib/imageFilters.py).
+
 ##### 3.2.3.1 RGB Colorspace Thresholding
+
 One of the most difficult lane lines to isolate are the yellow lane lines.  Since they use only two of the three RGB (Red, Green, Blue) color components, Red and Green, we can just use brightness (Luma) to detect them like white lines.  This become perticularly difficult when we encounter yellow lane lines in images with poor visibility:
 
 ![Yellow Lane Lines in poor visibility image](./test_images/test15.jpg)
 
 ###### 3.2.3.1.1 Red
+
 Using thresholding on the red color channel in an RGB colorspace, we can render this image from the poor visibility image:
 
 ![Yellow Lane Lines enhanced using Red color channel thresholding](./output_images/test15diag1-redfilter.png)
@@ -121,10 +133,13 @@ However, this filter does not work for all cases, and become perticularly diffic
 ![ImageFilters applied on test1](./output_images/test1diag1-redfilter.png)
 
 So, we need to continue searching for additional image filters.
+
 ##### 3.2.3.2 Sobel Thresholding
+
 The Sobel operators combine the idea of Gaussian smoothing and differentiation filters and is at the heart of Canny edge detection algorithm.  Since the filter takes the first, second, third, or mixed image derivatives of the grayscaled image, the result is more or less resistant to any noise in the image and reliable edges are produced.  More about the OpenCV libraries implementation of the Sobel operator is available [here](http://docs.opencv.org/2.4/modules/imgproc/doc/filtering.html#sobel).
 
 ###### 3.2.3.2.1 Sobel X and Y Derivitives
+
 The Sobel image derivitives in the X direction is given by the following formula assuming a 3x3 kernel.  
 
 ![Sobel Operator derivitive in the X direction](http://docs.opencv.org/2.4/_images/math/f2531c53069c2dabcab2bcb391518bd65dc535eb.png)
@@ -175,7 +190,7 @@ Again this is still not enough, because we still get nasty results of missing ye
 ![Test1 Sobel X and Y Applied](./output_images/test1diag1-sobelxy.png)
 
 ###### 3.2.3.2.2 Sobel Magnitude and Directional
-The idea of taking the magnitude (Sobel XY) of the Sobel X and Y results is to see if there is a distance factor in the individule components in the gradient that can be used to further isolate the lines/edges in the image.  Sobel XY is calculated by squaring the X and Y components of the Sobel operator and then take the square root of their sum, and, in essence, calculate the magnitude of changes in intensity that being experienced by that pixel in that image.  If there is an absense of any one of the components for a particular pixel, then the value produced at that pixel is just the same as for the Sobel X or Y component remaining.  The formula is:
+The idea of taking the magnitude (Sobel XY) of the Sobel X and Y results is to see if there is a distance factor in the individual components in the gradient that can be used to further isolate the lines/edges in the image.  Sobel XY is calculated by squaring the X and Y components of the Sobel operator and then take the square root of their sum, and, in essence, calculate the magnitude of changes in intensity that being experienced by that pixel in that image.  If there is an absence of any one of the components for a particular pixel, then the value produced at that pixel is just the same as for the Sobel X or Y component remaining.  The formula is:
 
 ![Sobel Magnitude Formula](./images/sobel-mag-formula.png)
 
@@ -201,6 +216,7 @@ The **ImageFilters** module uses the following function to create the filter:
         # 7) Return this mask as your binary_output image
         return mag_binary
 ```
+
 The idea of taking the directional Sobel is a to try to isolate edges based on an orientation.  It is simply the arctangent of the y-gradient divided by the x-gradient.  The formula is:
 
 ![Sobel Directional Formula](./images/sobel-dir-formula.png)
@@ -247,11 +263,12 @@ Again this is still not enough, because we still get nasty results of missing ye
 ![Test1 Sobel X and Y Applied](./output_images/test1diag1-sobelmagdir.png)
 
 ##### 3.2.3.3 HLS Colorspace Thresholding
+
 Obviously by now, we know that Sobel operations, in all of its wonderful various forms, will not fulfill our yellow lane line finding needs.  Its now time to look at other colorspaces for inspirations.  This time we will look at HLS (**Hue**, **Lightness** and **Saturation**).  **Hue** represents color independent of any change in brightness.  **Lightness** represents luminacity or brightness, and can be compared to converting an RGB image to grayscale.  **Saturation** is a measurement of colorfulness as compared to *whiteness*.  The HLS (hue, lightness, saturation) color space is a cylindrical representation of the RGB model. **Hue** is measured in degrees around the circumference of the cylinder. *Red* is at 0°, *green* at 120°, and *blue* at 240°, then wrapping back to *red* at 360°. Note that there is a discontinuity at 0° and 360°. **Saturation** is measured in percent from the center of the cylinder to its radius. Lightness is measured in percent from the bottom to the top of the cylinder.  You can find more information about colorspaces [here](https://www.codeproject.com/articles/243610/the-known-colors-palette-tool-revised-again) and [here](https://www.script-tutorials.com/what-is-a-color-model/)
 
 ![Hue Lightness Saturation Color Space Model](https://www.codeproject.com/KB/miscctrl/RevisedKnownColorsPalette/HSL_color_cylinder.png)
 
-For our lane finding needs, we will drop the **Lightness** color channel as a means of filtering and look at **Hue** and **Saturation** color channels to threshold instead.  We are interested in filtering for the yellow lane lines against white background since the Sobel functions are excellent in filting for edge detection based on luminance already.  The **Hue** color channel is an obvious candidate for filter yellow lane lines, and **Saturation** (value of color away from white) will help too.
+For our lane finding needs, we will drop the **Lightness** color channel as a means of filtering and look at **Hue** and **Saturation** color channels to threshold instead.  We are interested in filtering for the yellow lane lines against white background since the Sobel functions are excellent in filtering for edge detection based on luminance already.  The **Hue** color channel is an obvious candidate for filter yellow lane lines, and **Saturation** (value of color away from white) will help too.
 The **ImageFilters** module uses the following function and OpenCV *cvtColor* function to create these two filters:
 
 ```
@@ -285,7 +302,9 @@ We applied a threshold of (50, 100) for **Hue** and (88, 190) for **Saturation**
 ![Test2 Sobel X and Y Applied](./output_images/test2diag1-HS.png)
 
 These two filters appears to be mutually exclusive.  The filter created by using thresholding against the **Hue** color channel can be used to mask out the white background.  The filter created by thresholding against the **Saturation** color channel can be used for finding the yellow lane lines.  In practice, this works quite well, even against test1 image's nasty yellow lane line against its white concrete bridge background using this filter:
+
 ![Test1 Sobel X and Y Applied](./output_images/test1diag1-HS.png)
+
 Success at Last!
 
 ##### 3.2.3.4 Filter Combinations
@@ -300,8 +319,10 @@ And this combination produced the following combination at the end as indicated 
 ![Image Filters](./output_images/imagefiltersresults.png)
 
 The resulting threshold binary image worked well in the video mostly, but was brittle.  There were still many places it would fail.  If there were only a way we could apply multiple combinations of thresholds to what the images needed for finding lane lines.  As it turned out, there was!  In comes image analysis.
+
 ##### 3.2.3.5 Image Analysis
-What is at issue is that we were applying the same thresholds on different images with different lighting conditions.  As with previous Machine Learning techniques, we learned that normalization of the data were essential for being able to retrieve useful information.  This is no exception.  The idea is that based on statistics of the images we have, we should be able to figure out what is the optimum filter combination for each type of image, so that we don't have to treat them all the same.  So, first we have to generate a set of useful information on the images as a base to try to figure out how to generate more tailored filter combinations.  Below are the result of this study.  The **ImageFilters** module uses the *imageQ* function to generate the statics:
+
+What is at issue is that we were applying the same thresholds on different images with different lighting conditions.  As with previous Machine Learning techniques, we learned that normalization of the data were essential for being able to retrieve useful information.  This is no exception.  The idea is that based on statistics of the images we have, we should be able to figure out what is the optimum filter combination for each type of image, so that we don't have to treat them all the same.  So, first we have to generate a set of useful information on the images as a base to try to figure out how to generate more tailored filter combinations.  Below are the results of this study.  The **ImageFilters** module uses the *imageQ* function to generate the statics:
 
 ![Image Analysis](./output_images/imageanalysisresults.png)
 
@@ -361,6 +382,7 @@ The resulting image is shown below.
 ![Image Quality Enhancements](./output_images/imageenhancementresults.png)
 
 ##### 3.2.3.7 Filter Combination After Exposure Correction/Normalization (Experimental)
+
 Once we had the new balanced lower half of the image where the lane lines were, we expected an easy win for just picking an optimal binary threshold combination.  This was not the case, as can be seen here.  While a lot of images now have lane lines that are easier to identify, it seems we still need multiple filter combinations.
 
 ![Enhanced Filter Combinations](./output_images/enhancedimagefiltersresults.png)
@@ -380,6 +402,7 @@ In the end, we decided to create five combinations.  One of them worked very wel
 | Saturation | (88, 190) | (88, 250) | (20, 100) | (20, 100) | (20, 80) |
 
 Additional filter combinations may be defined later.  The **RoadManager** module currently uses the following logic to decide which filter combination to apply to the image.  We will discuss more about the **RoadManager** in sections 3.2.5, Lane Line Identification and 3.2.6, Lane Line Measurements.
+
 ```
         # detected cloudy condition!
         if self.curImgFtr.skyText == 'Sky Condition: cloudy' and self.curFrame == 0:
@@ -401,18 +424,25 @@ Additional filter combinations may be defined later.  The **RoadManager** module
         else:
             self.curImgFtr.applyFilter5()
 ```
-And as explained earlier, we had some versioning issues with the Jupyter notebook and that was abandoned, but wanted to show what was working up to that point.  In the newer CLI implimentation of the software pipeline, you may generate a diagnostic screen of the image filters using the following syntax:
+
+And as explained earlier, we had some versioning issues with the Jupyter notebook and that was abandoned, but wanted to show what was working up to that point.  In the newer CLI implementation  of the software pipeline, you may generate a diagnostic screen of the image filters using the following syntax:
+
 ```
 python P4pipeline.py --diag=1 <inputfile> <outputfile>
 ```
+
 The following sample run:
+
 ```
 python P4pipeline.py --diag=1 test_images/test1.jpg output_images/test1diag1.jpg
 ```
+
 Produces this output:
+
 ![Test1 Diag 2 Output](./output_images/test1diag1.jpg)
 
 ##### 3.2.3.9 Horizon Line Detection
+
 You may have noticed that there is a curious yellow line running across the right bottom panel of the test1diag1.jpg diagnostic screen, and ask what that is.  This is our attempt at detecting the road horizon in the image as part of the **ImageFilter** class.  It uses the **Sobel XY** (Magnitude) as a threshold for locating the horizon using this algorithm:
 
 ```
@@ -435,13 +465,15 @@ def horizonDetect(self, debug=False, thresh=50):
                	horizonLine += 1
 ```
 
-But why should we care?  In the next stage of the pipeline, we will be performing a persective to plane transform, and one of the issues with doing these types of transforms are its non liniarity, particularly at the vanishing point, which is one of the points along the horizon of the perspective image.  As you approach the vanishing point, a short vertical distance in pixel space, represent a very large distance when projected in birds-eye view.  We will describe this in more details in *section 3.2.6, Lane Line Measurements.*
+But why should we care?  In the next stage of the pipeline, we will be performing a perspective to plane transform, and one of the issues with doing these types of transforms are its nonlinearity, particularly at the vanishing point, which is one of the points along the horizon of the perspective image.  As you approach the vanishing point, a short vertical distance in pixel space, represent a very large distance when projected in birds-eye view.  We will describe this in more details in *section 3.2.6, Lane Line Measurements.*
+
 #### 3.2.4 Perspective to Plane Transform
-One of the major difference between Project 1 and 4, is the requirement to apply a perspective transform to rectify the binary road image to a ("birds-eye view").  The reason to do this is to more easily identify the lane lines and to make curvature measurements.  We will be using OpenCV *getPerspectiveTransform* and *cv2.warpPerspective* functions to do the heavy lifting of purforming the transformation, but we still need to find four corners points on the road surface to project on to a planar "bireds-eye view.  Project 1 back to the rescue with the Houghline function.  Recall we used the Houghline function to approximate the lane line locations.  Those identified lane lines are parallel in perspective, since they are suppose to form the lane lines which are also in parallel in perspective.  If we assume that the base of the lane lines, where the lane meets the bottom of the image, is also parallel to another line that is near the horizon, then we have a rectangle that are formed by the two sets of parallel lines (see the red lines in the left image below.)  We can use the corner points of this rectangle as our source points and then map them to a planar surface by warping their points as describe below using the orange and light blue dashed arrow lines.  The blue dash lines indecates that the image on both sides of the transform are symtric and will remain symtric during the transformations. Therefore, we can reperpose so of the old codes from Project 1 to perform the initial task of not just estimate the lane lines, but to also calculate our source points.  It is important that we are able to calculate this dynamically because, we do not know in advance if the camera is facing a road going uphill or downhill and the perspective transform for them will be quite different and make it harder to identify lane lines.
+
+One of the major difference between Project 1 and 4, is the requirement to apply a perspective transform to rectify the binary road image to a ("birds-eye view").  The reason to do this is to more easily identify the lane lines and to make curvature measurements.  We will be using OpenCV *getPerspectiveTransform* and *cv2.warpPerspective* functions to do the heavy lifting of performing the transformation, but we still need to find four corners points on the road surface to project on to a planar "birds-eye view.  Project 1 back to the rescue with the Houghline function.  Recall we used the Houghline function to approximate the lane line locations.  Those identified lane lines are parallel in perspective, since they are suppose to form the lane lines which are also in parallel in perspective.  If we assume that the base of the lane lines, where the lane meets the bottom of the image, is also parallel to another line that is near the horizon, then we have a rectangle that are formed by the two sets of parallel lines (see the red lines in the left image below.)  We can use the corner points of this rectangle as our source points and then map them to a planar surface by warping their points as describe below using the orange and light blue dashed arrow lines.  The blue dashed line indicates that the image on both sides of the transform are symmetric and will remain symtric during the transformations. Therefore, we can repurpose so of the old codes from Project 1 to perform the initial task of not just estimate the lane lines, but to also calculate our source points.  It is important that we are able to calculate this dynamically because, we do not know in advance if the camera is facing a road going uphill or downhill and the perspective transform for them will be quite different and make it harder to identify lane lines.
 
 ![Perspective Image Transform](./images/projectiontransform.png)
 
-We will be using our **ProjectionManager** module to handling these OpenCV *HoughLinesP* calculations and initial source point generation.  In general, we will be using the *HoughLinesP* function to find the left and right lane lines.  Using linear algrabra calculations, we will identify the Y intercept of both lines.  This, in theory, is where both the horizon is at and also the vanishing point in perspective.  From there, we will have to calculate a "backoff" from the horizon, since points near the vanishing point is theorically at infinity and will not be useful.  Our current rule of thumb for a standard backoff during initialization is at 30 pixels; however, this is now no longer static and can be dynamically change during video processing based on detected horizon from the **ImageFilter** module which we will describe in section 3.2.6, Lane Line Measurements.  Below is the code segment that the **ProjectionManager** module uses to perform the backoff calculations:
+We will be using our **ProjectionManager** module to handling these OpenCV *HoughLinesP* calculations and initial source point generation.  In general, we will be using the *HoughLinesP* function to find the left and right lane lines.  Using linear algebraic calculations, we will identify the Y intercept of both lines.  This, in theory, is where both the horizon is at and also the vanishing point in perspective.  From there, we will have to calculate a "backoff" from the horizon, since points near the vanishing point is theoretically at infinity and will not be useful.  Our current rule of thumb for a standard backoff during initialization is at 30 pixels; however, this is now no longer static and can be dynamically change during video processing based on detected horizon from the **ImageFilter** module which we will describe in section 3.2.6, Lane Line Measurements.  Below is the code segment that the **ProjectionManager** module uses to perform the backoff calculations:
 
 ```
     # find the right and left line's intercept,
@@ -480,6 +512,7 @@ We will be using our **ProjectionManager** module to handling these OpenCV *Houg
 ```
 
 We now have the calculated points: (lx1,ly1), (rx1,ry1), (rx2, ry2) and (lx2, ly2) that we can use as source point for the OpenCV *getPerspectiveTransform* function, but we still need a destination points for us to warp into.  Since our two stated goal outside of the project goals from the beginning is to:
+
 1. Extend the rectified lane lines as far to the horizon as possible
 2. Keep the correct aspect ratio when projecting the perspective view down to a planar ('birds-eye') view
 
@@ -519,11 +552,12 @@ Using these calculated source and destination rectangles, we are now able to per
 ```
 
 This function when applied to the test images, has the following outcome when using the last Jupyter notebook version:
+
 *NOTE: We were not able to perform two of the perspective transform in the set of test images below.  This is because we were unable to find an estimated lane line in two of the video frames in the harder challenge video where the right lane line became obscured or nearly vertical.  These are just two of the many failure points in our current, even CLI, implementation.*
 
 ![Perspective Image Warped to Planar](./output_images/initialprojectionresults.png)
 
-But as explained earlier, we had some versioning issues with the Jupyter notebook and that was abandoned, but wanted to show what was working up to that point.  In the newer CLI implimentation of the software pipeline, you may generate a diagnostic screen of the image prespective projection using the following syntax:
+But as explained earlier, we had some versioning issues with the Jupyter notebook and that was abandoned, but wanted to show what was working up to that point.  In the newer CLI implementation  of the software pipeline, you may generate a diagnostic screen of the image perspective projection using the following syntax:
 
 ```
 python P4pipeline.py --diag=2 <inputfile> <outputfile>
@@ -539,7 +573,7 @@ Produces this output:
 
 ![Test1 Diag 2 Output](./output_images/test5diag2.jpg)
 
-To understand perspective images, you have to understand what is the **vanishing point**.  The **vanishing point** is formed by where the two estimated red lane lines meet with the yellow horizon line in the perspective image above in the upper-left panel.  It is important to realize that when we did the transform, we effectively stretched the pixels near the **vanishing point** to fit the top of our new planar 'birds-eye' view, while at the same time compressed the pixels near the bottom of our perspective image.  To understand this stretching effect better, we drew a dark green hexigon in the perspective image, and then projected it onto the planar 'birds-eye' view in the lower-left panel.  Notice how the bottom of the hexigon is now much smaller in the birds-eye view than in the prespective image?  What about the top of the hexigon?  The sides of the two longer sides of the hexigon is now parallel in the 'birds-eye' view.  What kind of stretching do you think are involved?  Also, notice how far to the top that the concrete bridge ends in the perspective image, but it seem quite short in comparison in the planar birds-eye view?  What's happening there?
+To understand perspective images, you have to understand what is the **vanishing point**.  The **vanishing point** is formed by where the two estimated red lane lines meet with the yellow horizon line in the perspective image above in the upper-left panel.  It is important to realize that when we did the transform, we effectively stretched the pixels near the **vanishing point** to fit the top of our new planar 'birds-eye' view, while at the same time compressed the pixels near the bottom of our perspective image.  To understand this stretching effect better, we drew a dark green hexagon in the perspective image, and then projected it onto the planar 'birds-eye' view in the lower-left panel.  Notice how the bottom of the hexagon is now much smaller in the birds-eye view than in the perspective image?  What about the top of the hexagon?  The sides of the two longer sides of the hexagon are now parallel in the 'birds-eye' view.  What kind of stretching do you think are involved?  Also, notice how far to the top that the concrete bridge ends in the perspective image, but it seem quite short in comparison in the planar birds-eye view?  What's happening there?
 
 ![Perspective Image Transform](./images/projectiontransform.png)
 
@@ -549,7 +583,7 @@ Since we have compress the pixels at the bottom of the new birds-eye view image,
 
 #### 3.2.5 Lane Line Identification
 
-Now that we have transform our perspective view to a planar 'birds-eye' view, its time to identify the lane lines on the road surface.  We could just start by using the lane line estimates that we used for projection in the first place, but what is the fun in that?  Instead, we will go ahead and use a histogram of the lane lines that we have already isolated using our **ImageFilter** module.
+Now that we have transformed our perspective view to a planar 'birds-eye' view, its time to identify the lane lines on the road surface.  We could just start by using the lane line estimates that we used for projection in the first place, but what is the fun in that?  Instead, we will go ahead and use a histogram of the lane lines that we have already isolated using our **ImageFilter** module.
 
 ##### 3.2.5.1 Finding the Lane Line Base
 
@@ -644,7 +678,7 @@ Where A, B and C are polynomial coefficient constants returned by **numpy** *pol
 
 ![Project Video Frame1 Lane Line Fitting](./images/project_video-frame1-lanelines.png)
 
-And here is the relivant code segment in the **Line** module:
+And here is the relevant code segment in the **Line** module:
 
 ```
     # Fit a (default=second order) polynomial to lane line
@@ -686,7 +720,7 @@ You may have notice that there are gaps between the detected lane lines points a
 1. Faster: Less point counting means less time spent processing.
 2. Allow for increase confidence in subsequent frame processing
 
-What this means is that since we are optimizing on speed, the less time we spend on processing each frame matters.  Counting just half the lane line points is good enough for when we initialize the **Line** module.  Especially if it needs to do this in the middle of the video when a faster line tracking algorithm has a miss and needs to start over (see section 3.3.2 Lane Tracking for further discussion).  In addition, we are assuming only half the points were counted in our confidence lane line detection algorithm (see section 3.3.3 Confidence Calculations)
+What this means is that since we are optimizing on speed, the less time we spend on processing each frame matters.  Counting just half the lane line points is good enough for when we initialize the **Line** module.  Especially if it needs to do this in the middle of the video when a faster line-tracking algorithm has a miss and needs to start over (see section 3.3.2 Lane Tracking for further discussion).  In addition, we are assuming only half the points were counted in our confidence lane line detection algorithm (see section 3.3.3 Confidence Calculations)
 
 #### 3.2.6 Lane Line Measurements
 
@@ -697,7 +731,7 @@ Then a fellow student, *Kyle Stewart-Frantz*, came forward with information that
 
 ![Location at Frame 93](./images/radius-of-curvature-at-frame93.png)
 
-From the reviewer, it seems that the first curve should have an estimated radius of curvature about 900m (+/- 20m error).  Looking at my model and projection calculations, I was not quite sure how to resolve the differences, until I found [US Department of Transportation's Federal Hightway Administration's guidelines on Width and Patterns of Longitudinal Pavement Markings (Section 3A.05.)](http://mutcd.fhwa.dot.gov/htm/2003r1/part3/part3a.htm)  In the guidelines it states: "Broken lines should consist of 3 m (10 ft) line segments and 9 m (30 ft) gaps, or dimensions in a similar ratio of line segments to gaps as appropriate for traffic speeds and need for delineation."  So, that mean one set of line and the gap between the lines together should be 12 m in length.  Going back into the projection, we try to find a location nearly straight and start taking some measurements in the 'birds-eye' view.  Frame 338 fit the description and is shown below:
+From the reviewer, it seems that the first curve should have an estimated radius of curvature about 900m (+/- 20m error).  Looking at my model and projection calculations, I was not quite sure how to resolve the differences, until I found [US Department of Transportation's Federal Highway Administration's guidelines on Width and Patterns of Longitudinal Pavement Markings (Section 3A.05.)](http://mutcd.fhwa.dot.gov/htm/2003r1/part3/part3a.htm)  In the guidelines it states: "Broken lines should consist of 3 m (10 ft) line segments and 9 m (30 ft) gaps, or dimensions in a similar ratio of line segments to gaps as appropriate for traffic speeds and need for delineation."  So, that mean one set of line and the gap between the lines together should be 12 m in length.  Going back into the projection, we try to find a location nearly straight and start taking some measurements in the 'birds-eye' view.  Frame 338 fit the description and is shown below:
 
 ![Project Video Frame 338, Birds-eye view](./output_images/project_video_frame338-birds-eye.png)
 
@@ -735,7 +769,7 @@ def radius_in_meters(self, distance):
 
 ```
 
-Our **RoadManager** adverages the left and right lane line measurements:
+Our **RoadManager** averages the left and right lane line measurements:
 
 ```
 self.radiusOfCurvature = (self.leftLane.radiusOfCurvature + self.rightLane.radiusOfCurvature)/2.0
@@ -776,9 +810,10 @@ self.rightLane.radius_in_meters(distance)
 self.rightLane.meters_from_center_of_vehicle(distance)
 ```
 
-It is here that I like to thank *Kyle Stewart-Frantz* again.  It was he that pointed out that my meter to centimeter convertion was off by a factor of 10!  Thanks Kyle!
+It is here that I like to thank *Kyle Stewart-Frantz* again.  It was he that pointed out that my meter to centimeter conversion was off by a factor of 10!  Thanks again Kyle!
 
 #### 3.2.7 Plane to Perspective Transform
+
 After all of this processing, the software pipeline now needs to somehow show that it was able to identify the lane lines.  The best way to do this is to somehow paint the image of where the lane lines are and their boundaries.  Since we fitted a polynomial equation to describe the line, we can use it to create the points necessary to draw a polygon of the surface of the road.  The following code segment is what the **RoadManager** module does to do this with the help of its left and right **Line**, **ImageFilters** and **ProjectionManager** modules:
 
 ```
@@ -798,11 +833,12 @@ self.final = self.curImgFtr.miximg(self.curImgFtr.curImage, self.roadunwarped, 0
 ```
 
 Below are some results from the Jupyter notebook version before it was abandoned:
+
 *NOTE: We were not able to perform at least one of the perspective transform in the set of test images below, and some are poorly done.  This is because we were unable to find an estimated lane line in most of the video frames in the harder challenge video where the right lane line became obscured, nearly vertical or hidden by a passing vehicle.  These are just three of the many failure points in our current, even CLI, implementation.*
 
 ![Plane to Perspective Transform using polygon renderings](./output_images/initialJPGlanefindingresults.png)
 
-You may also use the CLI to display the road mask rendering by invoking the --diag=2 option like so:
+You may also use the CLI to display the road mask rendering by invoking the `--diag=2` option like so:
 
 ```
 python P4pipeline.py --diag=2 test_images/test5.jpg output_images/test5diag2.jpg
@@ -815,7 +851,8 @@ This will produces this output:
 Enjoy!
 
 #### 3.2.8 Diagnostics
-As explained in the previous sections, there are diagnostics screen available from the **DiagManager** to help you with any errors you see happening and see where it may be occuring.  If you believe it is an **ImageFilter** bug, you may want to use the --diag=1 option to invoke the **ImageFilter** diagnostics as shown here:
+
+As explained in the previous sections, there are diagnostics screen available from the **DiagManager** to help you with any errors you see happening and see where it may be occuring.  If you believe it is an **ImageFilter** bug, you may want to use the `--diag=1` option to invoke the **ImageFilter** diagnostics as shown here:
 
 ```
 python P4pipeline.py --diag=1 test_images/test1.jpg output_images/test1diag1.jpg
@@ -825,7 +862,7 @@ will produce this image:
 
 ![Image Diagnostics Screen](./output_images/test1diag1.jpg)
 
-If you believe it is a **ProjectionManager** bug, you may want to use the --diag=2 option to invoke the **ProjectionManager** diagnostics as shown here:
+If you believe it is a **ProjectionManager** bug, you may want to use the `--diag=2` option to invoke the **ProjectionManager** diagnostics as shown here:
 
 ```
 python P4pipeline.py --diag=2 test_images/test1.jpg output_images/test1diag2.jpg
@@ -835,7 +872,7 @@ will produce this image:
 
 ![Projection Diagnostics Screen](./output_images/test1diag2.jpg)
 
-If you believe it is a **RoadManager** or **Line** module bug, you may want to use the --diag=3 option to invoke the **Full Diagnotics Mode** as shown here:
+If you believe it is a **RoadManager** or **Line** module bug, you may want to use the `--diag=3` option to invoke the **Full Diagnotics Mode** as shown here:
 
 ```
 python P4pipeline.py --diag=3 test_images/test1.jpg output_images/test1diag3.jpg
@@ -847,18 +884,19 @@ will produce this image:
 
 
 ### 3.3 Pipeline (Video)
+
 Whereas section 3.2 was about processing a single image, this section is about processing video.  Both are similar in that we need to identify lane lines; however, when dealing with video, one must be able to process the video, frame by frame, efficiently.  This means if the software pipeline finds that the frames are similar, then to build up efficiency, find ways to incorporate its findings to the next frame.  This will be the topic in this section.
 #### 3.3.1 Test Videos
 
 There are three test videos from Udacity for this section.  They are:
 
-1. Project Video:  This video shows the forward facing view of a multi-lane highway.  The road markings are mostly good, with some low contras areas around bridges.  The weather condition are nice and the sky are clear.
-2. Challenge Video:  This video shows the forward facing view of a multi-lane highway.  The road markings are faded and the pavement are in need of repair.  The weather condition are nice, but the sky are cloudy.
-3. Harder Challenge Video:  This video shows the forward facing view of a winding two lane country road.  The road markings are good at the beginning, but becomes poor as there are locations of poor visibility and high and low lit areas as the video continues.  The weather is nice, but the environment is in a forest surrounded by trees which has interesting lighting issues.
+1. Project Video:  This video shows the forward facing view of a multi-lane highway.  The road markings are mostly good, with some low contras areas around bridges.  The weather conditions are nice and the sky is clear.
+2. Challenge Video:  This video shows the forward facing view of a multi-lane highway.  The road markings are faded and the pavements are in need of repair.  The weather conditions are nice, but the sky are cloudy.
+3. Harder Challenge Video:  This video shows the forward facing view of a winding two-lane country road.  The road markings are good at the beginning, but become poor as there are locations of poor visibility and high and low lit areas as the video continues.  The weather is nice, but the environment is in a forest surrounded by trees, which has interesting lighting issues.
 
 #### 3.3.2 First N Frame Initialization
 
-For all videos, frame 1 to N initialization is the same, since there are no prior image to pass forward.  The software pipeline is essencially performing all of the steps in section 3.2 using the first frame of the video as the single image.  This process is also repeated if there is a failure in subsequent lane tracking (see section 3.3.4, Confidence Calculations).  Currently, N is set to 2.  Examples of first frame initializations are shown below:
+For all videos, frame 1 to N initialization is the same, since there are no prior images to pass forward.  The software pipeline is essentially performing all of the steps in section 3.2 using the first frame of the video as the single image.  This process is also repeated if there is a failure in subsequent lane tracking (see section 3.3.4, Confidence Calculations).  Currently, N is set to 2.  Examples of first frame initializations are shown below:
 
 **Project Video: Frame 1**
 
@@ -872,8 +910,9 @@ For all videos, frame 1 to N initialization is the same, since there are no prio
 
 ![Project Video Frame 1 Full Diagnostics](./output_images/harder_challenge_video_diagfull-frame1.png)
 
-#### 3.3.3 Lane Tracking
-Once we reach the beyond the first N frames then it becomes more interesting.  The subsequent frames are still going through the **CameraCal** module which does the distortion correctin mentioned in section 3.2.2 and the **ImageFilter** module which performs image filtering from section 3.2.3.  However, by now the lane tracking should be close to 100% confidence (see section 3.3.4, Confidence Calculations).  So, now the **ProjectionManager** no longer needs to perform its line approximation to find its source points to transform the image from perspective view to 'birds-eye' view mentioned in section 3.2.4.  Instead, it will start using the source points as it was discovered when the lane lines reached 100% confidence.  As mentioned before, there are hooks for the **RoadManager** module to tweak the source points based on the appearant vertical location of the horizon and **vanishing point** as discovered by the **ImageFilter** module.
+#### 3.3.3 Lane-tracking
+
+Once we reach the beyond the first N frames then it becomes more interesting.  The subsequent frames are still going through the **CameraCal** module which does the distortion correction mentioned in section 3.2.2 and the **ImageFilter** module which performs image filtering from section 3.2.3.  However, by now the lane tracking should be close to 100% confidence (see section 3.3.4, Confidence Calculations).  So, now the **ProjectionManager** no longer needs to perform its line approximation to find its source points to transform the image from perspective view to 'birds-eye' view mentioned in section 3.2.4.  Instead, it will start using the source points as it was discovered when the lane lines reached 100% confidence.  As mentioned before, there are hooks for the **RoadManager** module to tweak the source points based on the apparent vertical location of the horizon and **vanishing point** as discovered by the **ImageFilter** module.
 
 ```
     # an attempt to dampen the bounce of the car and the road surface.
@@ -895,7 +934,7 @@ Once we reach the beyond the first N frames then it becomes more interesting.  T
 
 This **ProjectionManager** *setSrcTop* function was an attempt to dampen the bounce of the car and the road surface as detected by a rapid change in the vanishing point; however, we concluded that additional experimentation would need to occur that went beyond the scope of this project and have placed it on hold.
 
-As explaned before in section 3.2.5, Lane Line Identification, the first one or two frames went through the exercise of creating histograms and walking up the lanes in the 'birds-eye' view, and then finally fitted a 2nd degree polynomial with the lane lines laying on its sides.  Below is a reminder of the image of the road from its side rotated 90 degrees from its base, as an example from section 3.2.5.3 Fitting a 2nd Degree Polynomial:
+As explained before in section 3.2.5, Lane Line Identification, the first one or two frames went through the exercise of creating histograms and walking up the lanes in the 'birds-eye' view, and then finally fitted a 2nd degree polynomial with the lane lines laying on its sides.  Below is a reminder of the image of the road from its side rotated 90 degrees from its base, as an example from section 3.2.5.3 Fitting a 2nd Degree Polynomial:
 
 ![Project Video Frame1 Lane Line Fitting](./images/project_video-frame1-lanelines.png)
 
@@ -903,7 +942,7 @@ Again, notice that there are gaps between the discovered lane line points?  In t
 
 ![Project Video Frame1 Lane Line Fitting](./images/project_video-frame2-lanelines.png)
 
-So, what just happen?  How come the 2nd frame was able to more accurately find the lane line points that we had to work hard to find before?  Simple really, as part of fitting the 2nd degree polynomial, the **Line** module also generated a linemask.  This line mask is similar to the region of interest that we used before in Project 1, but instead of masking the entire region where the lane lines could be, we are creating a mask using the found lane line in the previous frame 'birds-eye' view and now applying it to the new frame.  We are creating this mask using the polynomial we fitted before and creating a polygon by adding an offset to either side.  By default it is +/-30 on both sides of the polyline during initialization, but afterwards drops to only +/-5:
+So, what just happen?  How come the 2nd frame was able to more accurately find the lane line points that we had to work hard to find before?  Simple really, as part of fitting the 2nd degree polynomial, the **Line** module also generated a line mask.  This line mask is similar to the region of interest that we used before in Project 1, but instead of masking the entire region where the lane lines could be, we are creating a mask using the found lane line in the previous frame 'birds-eye' view and now applying it to the new frame.  We are creating this mask using the polynomial we fitted before and creating a polygon by adding an offset to either side.  By default it is +/-30 on both sides of the polyline during initialization, but afterwards drops to only +/-5:
 
 ```
 # create linepoly
@@ -932,6 +971,7 @@ def applyLineMask(self, img):
 Remember, these masks are applied by the **Line** modules individually, so the left lane line has its own mask, and the right lane line has its own mask too.  If the lane lines were successfully found, the found points are gathered together and another polynomial is fitted.  This polynomial in turn will then create its own polyline and a line mask and the process repeats.  Now its time to figure out if we were successful in finding the lane in this frame.
 
 #### 3.3.4 Confidence Calculations
+
 After the masking of the lane line points, the **Line** module counts the number of pixels were captured by its mask and then calculates its confidence of finding the lane line in this frame.  Remember in section 3.2.5.3, Fitting a 2nd Degree Polynomial, we said that we were only counting half of the points?  We mention that there were two reasons:
 
 1. Faster: Less point counting means less time spent processing
@@ -945,7 +985,7 @@ Notice that at 50% confidence in frame 1, the confidence level of the left lane 
 
 ![Project Video Frame 2 - Lane Line Confidence Diagnostics](./output_images/project_video_diag2Q4-frame2.png)
 
-Notice that the confidence level on both lines are now at 100%, since they are capped there.  Also notice that the left pixel count is now at 5477 and the right at 3611.  This is an increase by a factor of at least 6X, so should not be a problem.  The other thing to notice is that the current frame's lane lines predicted by the last frame were very accurate with hardly any false possitives or false negatives.  At 10 frames out:
+Notice that the confidence levels on both lines are now at 100%, since they are capped there.  Also notice that the left pixel counts are now at 5477 and the right at 3611.  This is an increase by a factor of at least 6X, so should not be a problem.  The other thing to notice is that the current frame's lane lines predicted by the last frame were very accurate with hardly any false positives or false negatives.  At 10 frames out:
 
 ![Project Video Frame 10 - Lane Line Confidence Diagnostics](./output_images/project_video_diag2Q4-frame10.png)
 
@@ -973,7 +1013,7 @@ self.rightLane.fitpoly2()
 
 #### 3.3.5 Losing Track and Recovery
 
-Looking at this pattern, it seems that this algorithm could sustain itself forever, but all good things must come to an end, so in this section we will discuss what happens when we loss track of the lane lines and how do we recover.  For example, the first concrete bridge after the curve has aways been a challenge.  First it was the yellow lane lines on white concrete background, now we find that it causes the projection to become misaligned, and so the lane lines no longer match for the right lane line.  At frame 560, the right lane line finally drops below its 50% threshold at 238 pixel count on the concrete bridge and declares it no longer has confidence in its tracking abilities:
+Looking at this pattern, it seems that this algorithm could sustain itself forever, but all good things must come to an end, so in this section we will discuss what happens when we loss track of the lane lines and how do we recover.  For example, the first concrete bridge after the curve has always been a challenge.  First it was the yellow lane lines on white concrete background, now we find that it causes the projection to become misaligned, and so the lane lines no longer match for the right lane line.  At frame 560, the right lane line finally drops below its 50% threshold at 238 pixel count on the concrete bridge and declares it no longer has confidence in its tracking abilities:
 
 ![Project Video Frame 560](./output_images/project_video_frame560.png)
 
@@ -985,13 +1025,13 @@ This in turns sets up a confidence of 50% with a threshold of 716 pixel count fo
 
 ![Project Video Frame 562](./output_images/project_video_frame562.png)
 
-And was successfull in reaching 100% confidence on both left and right lane lines again, with a pixel count of 8549 for the left lane line and 2882 pixel count for the right lane.  However, the software pipeline was not able to completely recover and suffered another relaps at frame 637, just after passing the bridge:
+And was successful in reaching 100% confidence on both left and right lane lines again, with a pixel count of 8549 for the left lane line and a 2882 pixel count for the right lane.  However, the software pipeline was not able to completely recover and suffered another relapse at frame 637, just after passing the bridge:
 
 ![Project Video Frame 637](./output_images/project_video_frame637.png)
 
-The thing to notice is that the horizon line and **vanishing point** have now come too close to the our backoff point and we are now mapping a much larger area than we should.  In this particular case, its the perspective transform source coordinates at fault and needs to be corrected.  In the next frame, as befor, the **RoadManager** and **Line** modules initiates a complete restart and goes back to the same routine as described in section 3.2 that results in frame 638:
+The thing to notice is that the horizon line and **vanishing point** have now come too close to the backoff point and we are now mapping a much larger area than we should.  In this particular case, its the perspective transform source coordinates at fault and needs to be corrected.  In the next frame, as before, the **RoadManager** and **Line** modules initiates a complete restart and goes back to the same routine as described in section 3.2 that results in frame 638:
 
-![Project Video Frame 638](./output_images/project_video_frame638.png)
+![Project Video Frame 638](./output_images/project_video_frame638.png
 
 And by frame 639, the left lane pixel count is now back up to 6608 and the right lane line pixel count is at 2086.  Confidence is restored at 100% once again, and the process repeats until the end of the video frames is reached.
 
@@ -999,14 +1039,15 @@ And by frame 639, the left lane pixel count is now back up to 6608 and the right
 
 #### 3.3.6 Failure Intervention
 
-During this process of analyzing lane line tracking loss, we used our diagnostics tools to figure why we were failing so often.  We actually had a lot more failures before, and our predictions were less accurate.  We wanted to find a better way to prevent these failures in the first place while maintaining a more efficient process.  In this section, we discussed some failure prevention methods we discovered.
+During this process of analyzing lane line-tracking loss, we used our diagnostics tools to figure why we were failing so often.  We actually had a lot more failures before, and our predictions were less accurate.  We wanted to find a better way to prevent these failures in the first place while maintaining a more efficient process.  In this section, we discussed some failure prevention methods we discovered.
 
 ##### 3.3.6.1 Missing RoadManager and Line Component Interactions
+
 Before putting together our intervention method, we notice that the **Line** modules only fed their statistics forward to the **RoadManager** and there were no active feedback mechanism to have the **Line** module improve its performance by the **RoadManager** module.  So, there were alot of information being gathered by the **RoadManager** that were not placed into service to accurately predict the lane line locations.  We decided to change that.
 
 ##### 3.3.6.2 RoadManager Requests
 
-One of our discovery was that when the **Line** module loses track of a lane line, it is usually the points towards the horizon that were missed.  If we do not actively try to move back up and re-discover the lane line positions, we would lose the lane line completely and have to restart the process.  At first we tried different ways for the **RoadManager** to predict where the roadmarkings were and then force the **Line** component to search there.  This ended in all sorts of interesting lane line patterns that did not necessarily conform to what was actually in the video.  What we ended up doing was just to have the **RoadManager** tell the **Line** component to *go higher*, but only a little at a time *(ten pixels)*.  It seems this general request was all that was needed because the **Line** module actually knew what to do using its fitted polynomials.  It just needed to be told to extend its lane line mask higher up to encompass the extra points that were missed before.  Below are the new code segments added to **RoadManager** module to enable this:
+One of our discovery was that when the **Line** module loses track of a lane line; it is usually the points towards the horizon that were missed.  If we do not actively try to move back up and re-discover the lane line positions, we would lose the lane line completely and have to restart the process.  At first we tried different ways for the **RoadManager** to predict where the roadmarkings were and then force the **Line** component to search there.  This ended in all sorts of interesting lane line patterns that did not necessarily conform to what was actually in the video.  What we ended up doing was just to have the **RoadManager** tell the **Line** component to *go higher*, but only a little at a time *(ten pixels)*.  It seems this general request was all that was needed because the **Line** module actually knew what to do using its fitted polynomials.  It just needed to be told to extend its lane line mask higher up to encompass the extra points that were missed before.  Below are the new code segments added to **RoadManager** module to enable this:
 
 ```
 # If we are in the harder challenge, our visibility is obscured,
@@ -1083,15 +1124,21 @@ if self.newYTop is not None:
 ```
 
 ##### 3.3.6.4 Results
+
 So, what does this behavior look like in practice?  This animated GIF file shows the answer.  After a partial lane line miss, the **RoadManager** will start requesting the lane lines to climb higher, and we see this walking up the lane effect.
 
 <img src="./images/project_video_failure_prevention.gif" width=640 height=480>
 
 ## 4 Project Video Analysis
-As explaned earlier, the project video shows the forward facing view of a multi-lane highway.  The road markings are mostly good, with some problems at the low contras areas around bridges.  The weather condition are nice and the sky are clear.
+
+As explained earlier, the project video shows the forward facing view of a multi-lane highway.  The road markings are mostly good, with some problems at the low contras areas around bridges.  The weather conditions are nice and the sky is clear.
+
 ### 4.1 Failure Scenarios
+
 This video is mostly clean and the problem areas are isolated to the bridges.  The CLI software pipeline is able to handle the video easily with just three restarts at frames: 199, 561 and 638.
+
 #### 4.1.1 Frame 199
+
 At frame 198 in the project video, we find that there the right lane was unable to keep track of the dashed line pavement marking while it curved and dropped to only 443 pixel counts, which was below 50% confidence.
 
 ![Project Video Frame 198](./output_images/project_video_frame198.png)
@@ -1104,10 +1151,11 @@ At frame 200, the **RoadManager** and **Line** modules attempt to restart the fa
 
 ![Project Video Frame 200](./output_images/project_video_frame200.png)
 
-The recovery was successful with confidence restored to 100% for both left and right lane lines and with high pixel counts of 6865 and 5242 respectively.  This issue may be resolvable with the increase the width of the linemask by increasing the *self.maskDelta* from 5 to perhaps 12; however, this may introduce false positive pixel masking, something to look into in the future.
+The recovery was successful with confidence restored to 100% for both left and right lane lines and with high pixel counts of 6865 and 5242 respectively.  This issue may be resolvable with the increase the width of the line mask by increasing the *self.maskDelta* from 5 to perhaps 12; however, this may introduce false positive pixel masking, something to look into in the future.
 
 #### 4.1.2 Frame 561
-At frame 560 in the project video, we find that there was a jarring bounce that caused the projection to become misaligned, and so the lane lines no longer match for the right lane line.  Notice that the top of the 'birds-eye' view of the lane lines are much wider apart than at the bottom.  At frame 560, the right lane line finally drops below its 50% threshold at 238 pixel count on the concrete bridge and declares it no longer has confidence in its tracking abilities:
+
+At frame 560 in the project video, we find that there was a jarring bounce that caused the projection to become misaligned, and so the lane lines no longer match for the right lane line.  Notice that the top of the 'birds-eye' view of the lane lines is much wider apart than at the bottom.  At frame 560, the right lane line finally drops below its 50% threshold at 238 pixel count on the concrete bridge and declares it no longer has confidence in its tracking abilities:
 
 ![Project Video Frame 560](./output_images/project_video_frame560.png)
 
@@ -1119,7 +1167,7 @@ This in turns sets up a confidence of 50% with a threshold of 716 pixel count fo
 
 ![Project Video Frame 562](./output_images/project_video_frame562.png)
 
-And was successfull in reaching 100% confidence on both left and right lane lines again, with a pixel count of 8549 for the left lane line and 2882 pixel count for the right lane.
+And was successful in reaching 100% confidence on both left and right lane lines again, with a pixel count of 8549 for the left lane line and a 2882 pixel count for the right lane.
 
 #### 4.1.3 Frame 638
 
@@ -1127,7 +1175,7 @@ However, the software pipeline was not able to completely recover from the bounc
 
 ![Project Video Frame 637](./output_images/project_video_frame637.png)
 
-The thing to notice is that the horizon line and **vanishing point** have now come too close to the our backoff point and we are now mapping a much larger area than we should.  In this particular case, its the perspective transform source coordinates at fault and needs to be corrected.  In the next frame, as befor, the **RoadManager** and **Line** modules initiates a complete restart and goes back to the same routine as described in section 3.2 that results in frame 638:
+The thing to notice is that the horizon line and **vanishing point** have now come too close to the backoff point and we are now mapping a much larger area than we should.  In this particular case, its the perspective transform source coordinates at fault and needs to be corrected.  In the next frame, as before, the **RoadManager** and **Line** modules initiates a complete restart and goes back to the same routine as described in section 3.2 that results in frame 638:
 
 ![Project Video Frame 638](./output_images/project_video_frame638.png)
 
@@ -1136,24 +1184,33 @@ And by frame 639, the left lane pixel count is now back up to 6608 and the right
 ![Project Video Frame 639](./output_images/project_video_frame639.png)
 
 ## 4.2 Final Conclusion
+
 The take away from the failure and recover points are that the current software pipeline, while bias towards removing false positives, may lack the flexibility to rapidly change its direction when the lane lines changes too much without resorting to a restart.
 
 ## 5 Challenge Video Analysis
-The challenge video shows the forward facing view of a multi-lane highway.  The road markings are faded and the pavement are in need of repair.  The weather condition are nice, but the sky are cloudy.
+
+The challenge video shows the forward facing view of a multi-lane highway.  The road markings are faded and the pavements are in need of repair.  The weather conditions are nice, but the sky are cloudy.
+
 ### 5.1 Boosting
+
 This video was very difficult to process without a technique I discovered while experimenting with image exposure settings.  Essentially, at problem areas, we take the last N frames of the lane masks and we drag it into the problem area to enhance its brightness.  I liken it to turning on headlights at night, or using a strobe light to briefly see some helpful hints.
 
 <img src="./images/challenge_video_boosting.gif" width=640 height=480>
 
 ### 5.2 Failure Scenarios
+
 None!  Incrediable as it may seem, once we deployed boosting for the challenge video, there were no frames where the **RoadManager** had to restart the lane finding process due to loss.
 
 ### 5.3 Final Conclusion
+
 The take away from this experiment was that although it may work this time, we are not sure this technique would be useful everywhere.  More experiments will need to be conducted.
 
 ## 6 Harder Challenge Video Analysis
-The harder challenge video shows the forward facing view of a winding two lane country road.  The road markings are good at the beginning, but becomes poor as there are locations of poor visibility and high and low lit areas as the video continues.  The weather is nice, but the environment is in a forest surrounded by trees which has interesting lighting issues.
+
+The harder challenge video shows the forward facing view of a winding two-lane country road.  The road markings are good at the beginning, but become poor as there are locations of poor visibility and high and low lit areas as the video continues.  The weather is nice, but the environment is in a forest surrounded by trees, which has interesting lighting issues.
+
 ### 6.1 Video Diagnostics
+
 There are numerous issues at play here.  Chief amount those are:
 1. Areas of low lighting
 2. Areas of brightness
@@ -1188,38 +1245,44 @@ Our pipeline was not built for this type of road condition.  We did attempt to u
 1. Change the direction of Field of View from the **ProjectionManager** source perspective to point towards the road's vanishing point dynamically as seen by the **Line** modules.
 2. Slow down **RoadManager**'s request to move up the lane line in a more controlled manner.
 
-The best we could do was this 5 second segment at the beginning of the harder_challenge_video:
+The best we could do was this 5-second segment at the beginning of the harder_challenge_video:
 
 <img src="./images/harder_challenge_video_out.gif" width=640 height=480>
 
 But we believe given enough time, this could be solved, but its time to go on to the next project.
+
 *Please Note: This video was taken about two weeks back when we were still experimenting with the harder_challenge_video.  After updating everything to make the CLI version better for deployment, we discovered that the enhancements made no longer worked in this version of the CLI.  We will investigate why this is the case in a later phase of development.*
 
 ## 7 Areas of Further Studies
-On reflection of what was learned during this project, our thoughts are we were not given enough time to do a full case study.  There are still numerous area on lane line finding that we would still like to explore, but have to abandon due to time constrainst.  We are trying to document as much as possible on what we have learn upto now, so we can revisit it as time permits!
+
+On reflection of what was learned during this project, our thoughts are we were not given enough time to do a full case study.  There are still numerous area on lane line finding that we would still like to explore, but have to abandon due to time constraints.  We are trying to document as much as possible on what we have learn up to now, so we can revisit it as time permits!
 
 ### 7.1 Optimization
-This code was put together as an experiment/proof-of-concept, and not as something that goes into deployment.  Quite a bit of optimization can still be done.  We refactored this code as many as 10 times during development.  Area of improvement for optimization includes:
+
+This code was put together as an experiment/proof-of-concept, and not as something that goes into deployment.  Quite a bit of optimization can still be done.  We re-factored this code as many as 10 times during development.  Area of improvement for optimization includes:
 
 1. Removing experimental code segments
-2. Remove unneed image caches
+2. Remove unneeded image caches
 3. Reduce image filter rules
 
 ### 7.2 Image Enhancements
+
 Many things can be done in this area too, especially for the harder challenge video.  Things to consider:
 
 1. Gamma Correction on over exposed or under exposed images
 2. Improve contrast on low contrast images
 3. Experiment with boosting on harder challenge at low contrast areas
-4. Experiment with image inhancement in the 'birds-eye' view and warp back the correction in prespective
+4. Experiment with image enhancements in the 'birds-eye' view and warp back the correction in perspective
 
 ### 7.3 Directing the Field of View (FoV)
+
 Explore ways to control the Field of View from the transform perspective by dynamically calculating the optimal source points for finding the lane lines to:
 
 1. Control and isolate the areas where lane lines can be found, even on roads with high curvature
-2. Control horizonal and **vanishing point** anomalies when dealing with planar 'birds-eye' views.
+2. Control horizontal and **vanishing point** anomalies when dealing with planar 'birds-eye' views.
 
 ### 7.4 In Conclusion
+
 This has been a wonderful project, and we wish we could continue further; however, the end of the term is rapidly approaching and we need to get to Project 5!
 
 Cheers!
