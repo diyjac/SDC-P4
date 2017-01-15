@@ -413,11 +413,21 @@ class ProjectionManager():
                 cv2.putText(self.diag2, 'Frame: %d   Hough: %d'%(self.curFrame, hough), (30, 30), font, 1, (255,0,0), 2)
                 self.draw_area_of_interest(self.diag2, areaOfInterest, color=[0,128,0], thickness=5)
 
+                cv2.putText(self.diag2, 'x1,y1: %d,%d'%(int(lane_info[3][0]), int(lane_info[3][1])), (int(lane_info[3][0])-250, int(lane_info[3][1])-30), font, 1, (255,0,0), 2)
+                cv2.putText(self.diag2, 'x2,y2: %d,%d'%(int(lane_info[4][0]), int(lane_info[4][1])), (int(lane_info[4][0]), int(lane_info[4][1])-30), font, 1, (255,0,0), 2)
+                cv2.putText(self.diag2, 'x3,y3: %d,%d'%(int(lane_info[5][0]), int(lane_info[5][1])), (int(lane_info[5][0])-200, int(lane_info[5][1])-30), font, 1, (255,0,0), 2)
+                cv2.putText(self.diag2, 'x4,y4: %d,%d'%(int(lane_info[6][0]), int(lane_info[6][1])), (int(lane_info[6][0])-200, int(lane_info[6][1])-30), font, 1, (255,0,0), 2)
+
                 # diag 3 screen - complete road RGB image projected
                 diag3tmp = imgftr.miximg(imgftr.curImage, masked_edges*4)
                 self.draw_area_of_interest_for_projection(diag3tmp, areaOfInterest, color=[0,128,0], thickness1=1, thickness2=50)
                 self.draw_parallel_lines_pre_projection(diag3tmp, lane_info, color=[128,0,0], thickness=2)
                 self.diag3, M = self.unwarp_lane(diag3tmp, self.curSrcRoadCorners, self.curDstRoadCorners, self.mtx)
+
+                cv2.putText(self.diag3, 'x1,y1: %d,%d'%(int(self.curDstRoadCorners[0][0]), int(self.curDstRoadCorners[0][1])-1), (int(self.curDstRoadCorners[0][0])-300, int(self.curDstRoadCorners[0][1])-30), font, 1, (255,0,0), 2)
+                cv2.putText(self.diag3, 'x2,y2: %d,%d'%(int(self.curDstRoadCorners[1][0]), int(self.curDstRoadCorners[1][1])-1), (int(self.curDstRoadCorners[1][0]), int(self.curDstRoadCorners[1][1])-30), font, 1, (255,0,0), 2)
+                cv2.putText(self.diag3, 'x3,y3: %d,%d'%(int(self.curDstRoadCorners[2][0]), int(self.curDstRoadCorners[2][1])-1), (int(self.curDstRoadCorners[2][0]), int(self.curDstRoadCorners[2][1])-30), font, 1, (255,0,0), 2)
+                cv2.putText(self.diag3, 'x4,y4: %d,%d'%(int(self.curDstRoadCorners[3][0]), int(self.curDstRoadCorners[3][1])-1), (int(self.curDstRoadCorners[3][0])-300, int(self.curDstRoadCorners[3][1])-30), font, 1, (255,0,0), 2)
 
                 # diag 4 screen - road edges with masked out area shown projected
                 self.diag4, M = self.unwarp_lane(imgftr.makefull(self.diag1), self.curSrcRoadCorners, self.curDstRoadCorners, self.mtx)
