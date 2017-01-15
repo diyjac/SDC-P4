@@ -581,12 +581,12 @@ python P4pipeline.py --diag=2 <inputfile> <outputfile>
 The following sample run:
 
 ```
-python P4pipeline.py --diag=2 test_images/test1.jpg output_images/test1wsrc.jpg
+python P4pipeline.py --diag=2 test_images/test5.jpg output_images/test5diag2.jpg
 ```
 
 Produces this output:
 
-![Test1 Diag 2 Output](./output_images/test1wsrc.jpg)
+![Test1 Diag 2 Output](./output_images/test5diag2.jpg)
 
 To understand perspective images, you have to understand what is the **vanishing point**.  The **vanishing point** is formed by where the two estimated red lane lines meet with the yellow horizon line in the perspective image above in the upper-left panel.  It is important to realize that when we did the transform, we effectively stretched the pixels near the **vanishing point** to fit the top of our new planar 'birds-eye' view, while at the same time compressed the pixels near the bottom of our perspective image.  To understand this stretching effect better, we drew a dark green hexagon in the perspective image, and then projected it onto the planar 'birds-eye' view in the lower-left panel.  Notice how the bottom of the hexagon is now much smaller in the birds-eye view than in the perspective image?  What about the top of the hexagon?  The sides of the two longer sides of the hexagon are now parallel in the 'birds-eye' view.  What kind of stretching do you think are involved?  Also, notice how far to the top that the concrete bridge ends in the perspective image, but it seem quite short in comparison in the planar birds-eye view?  What's happening there?
 
