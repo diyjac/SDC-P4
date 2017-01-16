@@ -33,10 +33,14 @@ To achieve the design goals, we will create a pipeline made of 7 components.  Ea
 1. **CameraCal:** Python class that handles camera calibrations operations
 2. **ImageFilters:** Python class that handles image analysis and filtering operations
 3. **ProjectionManager:** Python class that handles projection calculations and operations
-4. **Line:** Python class that handles line detection, measurements and confidence calculations and operations
+4. **Line:** Python class that handles line detection, measurements and confidence calculations and operations.  There are two instances of this class: LeftLane and RightLane.
 5. **RoadManager:** Python class that handles image, projection and line propagation pipeline decisions
 6. **DiagManager:** Python class that handles diagnostic output requests
 7. **P4pipeline.py:** Main Python CLI component that handles input/output filename checking, option selections and media IO.
+
+This is a block diagram of how the classes are organized to process an image or a video (sequence of images):
+
+![P4pipeline Block Diagram](./images/P4pipelineStructure.png)
 
 *NOTE: This project started out as a Jupyter Notebook, but was abandoned because of versioning issues, and was getting too large.  However, we will use the graphics produced by the last version of the Notebook in this document.  An HTML version of the notebook can be accessed [here](./P4.html).*
 
