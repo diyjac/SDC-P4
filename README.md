@@ -100,7 +100,7 @@ Once we are done with camera calibrations, we can save the results of the distor
 ### 3.2 Pipeline (Single Images)
 After generating the camera undistortion matrix, we can now start using test images to practice finding lane lines using our software pipeline as we are in development.
 #### 3.2.1 Test Images
-We were given a set of eight test images to start with.  However, not being statisfied with just the eight, we added an additional fifteen images from the project, challenge and harder challenge videos to bring the total number of test images to twenty-three.  They are shown in the next session were we undistort them like the camera calibration chessboard images.
+We were given a set of eight test images to start with.  However, not being statisfied with just the eight, we added an additional fifteen images from the project, challenge and harder challenge videos to bring the total number of test images to twenty-three.  They are shown in the next session where we undistort them like the camera calibration chessboard images.
 #### 3.2.2 Distortion Correction
 The first thing the P4pipeline does when it starts its pipeline modules is to use the **ImageFilters** module to correct the distortion in the image using the generated distortion correction matrix obtained by the **CameraCal** module using camera calibration techniques as discussed in section 3.1.  Below, the twenty-three raw/unprocessed test images are shown on the left and the results of the distortion correction is shown on the right.  They may look very similar until you look at their edges.  The distortion corrected images have a smaller field of view than the uncorrected image.
 
