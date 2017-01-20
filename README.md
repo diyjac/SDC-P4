@@ -1032,7 +1032,7 @@ self.rightLane.fitpoly2()
 
 #### 3.3.5 Losing Track and Recovery
 
-Looking at this pattern, it seems that this algorithm could sustain itself forever, but all good things must come to an end, so in this section we will discuss what happens when we loss track of the lane lines and how do we recover.  For example, the first concrete bridge after the curve has always been a challenge.  First it was the yellow lane lines on white concrete background, now we find that it causes the projection to become misaligned, and so the lane lines no longer match for the right lane line.  At frame 560, the right lane line finally drops below its 50% threshold at 238 pixel count on the concrete bridge and declares it no longer has confidence in its tracking abilities:
+Looking at this pattern, it seems that this algorithm could sustain itself forever, but all good things must come to an end, so in this section we will discuss what happens when we lose track of the lane lines and how do we recover.  For example, the first concrete bridge after the curve has always been a challenge.  First it was the yellow lane lines on white concrete background, now we find that it causes the projection to become misaligned, and so the lane lines no longer match for the right lane line.  At frame 560, the right lane line finally drops below its 50% threshold at 238 pixel count on the concrete bridge and declares it no longer has confidence in its tracking abilities:
 
 ![Project Video Frame 560](./output_images/project_video_frame560.png)
 
@@ -1050,7 +1050,7 @@ And was successful in reaching 100% confidence on both left and right lane lines
 
 The thing to notice is that the horizon line and **vanishing point** have now come too close to the backoff point and we are now mapping a much larger area than we should.  In this particular case, its the perspective transform source coordinates at fault and needs to be corrected.  In the next frame, as before, the **RoadManager** and **Line** modules initiates a complete restart and goes back to the same routine as described in section 3.2 that results in frame 638:
 
-![Project Video Frame 638](./output_images/project_video_frame638.png
+![Project Video Frame 638](./output_images/project_video_frame638.png)
 
 And by frame 639, the left lane pixel count is now back up to 6608 and the right lane line pixel count is at 2086.  Confidence is restored at 100% once again, and the process repeats until the end of the video frames is reached.
 
