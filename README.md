@@ -20,11 +20,11 @@ $ get clone https://github.com/diyjac/SDC-P4.git
 
 As explained earlier, SDC-P4 is a python based CLI.  You list options by using `--help`:
 
-```sh
+```
 $ python P4pipeline.py --help
 usage: python P4pipeline.py [options] infilename outfilename
 
-DIYJAC\'s Udacity SDC Project 4: Advanced Lane Finding Pipeline
+DIYJACs Udacity SDC Project 4: Advanced Lane Finding Pipeline
 
 positional arguments:
   infilename   input image or video file to process
@@ -38,13 +38,13 @@ optional arguments:
 
 To process an image or a video using this pipeline, use this format:
 
-```sh
+```
 $ python P4pipeline.py <inputfile> <outputfile>
 ```
 
 The following is an example run:
 
-```sh
+```
 $ python P4pipeline.py test_images/test1.jpg output_images/test1.jpg
 ```
 
@@ -54,7 +54,7 @@ And produces this output:
 
 You may also wish to use the diagnostics mode and see how the pipeline process the images internally.  The following `--diag=1` option turns on image filter diagnostics:
 
-```sh
+```
 $ python P4pipeline.py --diag=1 test_images/test1.jpg output_images/test1diag1.jpg
 ```
 
@@ -64,7 +64,7 @@ will produce this image:
 
 Use the `--diag=2` option to invoke the **ProjectionManager** diagnostics as shown here:
 
-```sh
+```
 $ python P4pipeline.py --diag=2 test_images/test1.jpg output_images/test1diag2.jpg
 ```
 
@@ -74,7 +74,7 @@ will produce this image:
 
 Use the `--diag=3` option to invoke the **Full Diagnotics Mode** as shown here:
 
-```sh
+```
 $ python P4pipeline.py --diag=3 test_images/test1.jpg output_images/test1diag3.jpg
 ```
 
